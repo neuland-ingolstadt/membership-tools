@@ -30,8 +30,8 @@ async function main () {
   await ldapClient.bindAsync(process.env.BIND_CN, process.env.BIND_PASSWORD)
 
   console.log('Collecting information for LDAP account ...')
-  const firstName = await rl.questionAsync('First name: ')
-  const lastName = await rl.questionAsync('Last name: ')
+  const firstName = (await rl.questionAsync('First name: ')).trim()
+  const lastName = (await rl.questionAsync('Last name: ')).trim()
 
   const cn = `${normalize(firstName)}.${normalize(lastName)}`
   const dn = `cn=${cn},${process.env.USER_CN}`
