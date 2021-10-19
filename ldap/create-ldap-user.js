@@ -1,18 +1,12 @@
-const readline = require('readline')
 const ldap = require('ldapjs')
 const nodemailer = require('nodemailer')
 const mustache = require('mustache')
 const passwordGenerator = require('generate-password')
+const basicAuth = require('express-basic-auth')
 const { readFileSync } = require('fs')
 const { promisify } = require('util')
 
 require('dotenv').config()
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-})
-rl.questionAsync = question => new Promise(resolve => rl.question(question, resolve))
 
 const ldapClient = ldap.createClient({
   url: process.env.LDAP_SERVER
@@ -38,6 +32,16 @@ function normalize (str) {
     .replace(/ü/g, 'ue')
     .replace(/ß/g, 'ss')
     .replace(/ /g, '.')
+}
+
+async function validate (email) {
+  if (!/.@./.test(email)) {
+    return false
+  }
+  if (/@(outlook|hotmail|live|msn|passport)\./.test(email)) {
+    return false
+  }
+  return true
 }
 
 async function createLdapLogin (firstName, lastName) {
@@ -82,23 +86,49 @@ async function sendWelcomeEmail (privateEmail, firstName, lastName, email, passw
   })
 }
 
-async function main () {
-  console.log('Collecting information for LDAP account ...')
-  const firstName = (await rl.questionAsync('First name: ')).trim()
-  const lastName = (await rl.questionAsync('Last name: ')).trim()
-  const privateEmail = (await rl.questionAsync('Private Email: ')).trim()
+const express = require('express')
+const app = express()
+const port = 3000
 
-  const { email, password } = await createLdapLogin(firstName, lastName)
-  //const { email, password } = { email: 'test@example.com', password: 'yeet' }
+app.use(basicAuth({
+  users: {
+    'admin': process.env.ADMIN_PASSWORD
+  }
+}))
 
-  console.log('LDAP account created.')
+app.get('/create-member', async (req, res) => {
+  try {
+    const { firstName, lastName, email } = req.query
+    const body = mustache.render(readFileSync('web.mu', 'utf-8'), { firstName, lastName, email })
+    res.status(200).header('Content-Type', 'text/html; charset=utf-8').send(body)
+  } catch (e) {
+    console.error(e)
+    res.status(500).send(e.message)
+  }
+})
 
-  await sendWelcomeEmail(privateEmail, firstName, lastName, email, password)
+app.post('/create-member', async (req, res) => {
+  try {
+    const { firstName, lastName, email: privateEmail } = JSON.parse(req.query.payload)
 
-  console.log('Welcome email sent.')
+    if (!validate(email)) {
+      throw new Error('Invalid email address')
+    }
 
-  rl.close()
-}
+    const { email, password } = await createLdapLogin(firstName, lastName)
+
+    await sendWelcomeEmail(privateEmail, firstName, lastName, email, password)
+
+    res.status(200).send('OK')
+  } catch (e) {
+    console.error(e)
+    res.status(500).send(`Failed\n${e.message}`)
+  }
+})
+
+app.listen(port, () => {
+  console.log(`Listening at http://localhost:${port}`)
+})
 
 ldapClient.on('connect', () => main().catch(console.error))
 ldapClient.on('error', e => console.error(e))
