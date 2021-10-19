@@ -110,9 +110,9 @@ app.get('/create-member', async (req, res) => {
 
 app.post('/create-member', async (req, res) => {
   try {
-    const { firstName, lastName, email: privateEmail } = JSON.parse(req.query.payload)
+    const { firstName, lastName, email: privateEmail } = req.query
 
-    if (!validate(email)) {
+    if (!validate(privateEmail)) {
       throw new Error('Invalid email address')
     }
 
