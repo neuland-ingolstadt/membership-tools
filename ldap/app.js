@@ -12,6 +12,7 @@ const ldapClient = ldap.createClient({
   url: process.env.LDAP_SERVER
 })
 ldapClient.bindAsync = promisify(ldapClient.bind)
+ldapClient.unbindAsync = promisify(ldapClient.unbind)
 ldapClient.addAsync = promisify(ldapClient.add)
 
 const transporter = nodemailer.createTransport({
@@ -71,7 +72,7 @@ async function createLdapLogin (firstName, lastName) {
 
     return { email, password }
   } finally {
-    ldapClient.destroy()
+    await ldapClient.unbind()
   }
 }
 
