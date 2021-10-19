@@ -130,5 +130,7 @@ app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}`)
 })
 
-ldapClient.on('connect', () => main().catch(console.error))
+ldapClient.on('connect', () => {
+  console.log('LDAP connected')
+})
 ldapClient.on('error', e => console.error(e))
