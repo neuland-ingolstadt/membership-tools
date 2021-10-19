@@ -93,7 +93,8 @@ const port = 3000
 app.use(basicAuth({
   users: {
     'admin': process.env.ADMIN_PASSWORD
-  }
+  },
+  challenge: true
 }))
 
 app.get('/create-member', async (req, res) => {
