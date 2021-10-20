@@ -97,7 +97,7 @@ app.get('/create-member', async (req, res) => {
     res.status(200).header('Content-Type', 'text/html; charset=utf-8').send(body)
   } catch (e) {
     console.error(e)
-    res.status(500).send(e.message)
+    res.status(500).text(e.message)
   }
 })
 
@@ -113,10 +113,10 @@ app.post('/create-member', async (req, res) => {
 
     await sendWelcomeEmail(privateEmail, firstName, lastName, email, password)
 
-    res.status(200).send('OK')
+    res.status(200).text('OK')
   } catch (e) {
     console.error(e)
-    res.status(500).send(`Failed\n${e.message}`)
+    res.status(500).text(`Failed\nReason: ${e.message}`)
   }
 })
 
