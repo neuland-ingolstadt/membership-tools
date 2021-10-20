@@ -5,7 +5,7 @@
     </head>
     <body>
         <h1>Mitglied anlegen</h1>
-        <form method="post">
+        <form method="post" action="/create-member">
             Vorname: <br />
             <input type="text" name="firstName" value="{{firstName}}" /> <br />
             Nachname: <br />

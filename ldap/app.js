@@ -2,6 +2,7 @@ const Ldap = require('ldap-async').default
 const nodemailer = require('nodemailer')
 const mustache = require('mustache')
 const passwordGenerator = require('generate-password')
+const express = require('express')
 const basicAuth = require('express-basic-auth')
 const { readFileSync } = require('fs')
 
@@ -79,7 +80,6 @@ async function sendWelcomeEmail (privateEmail, firstName, lastName, email, passw
   })
 }
 
-const express = require('express')
 const app = express()
 const port = 3000
 
@@ -89,6 +89,7 @@ app.use(basicAuth({
   },
   challenge: true
 }))
+app.use(express.urlencoded({ extended: false }))
 
 app.get('/create-member', async (req, res) => {
   try {
@@ -103,7 +104,7 @@ app.get('/create-member', async (req, res) => {
 
 app.post('/create-member', async (req, res) => {
   try {
-    const { firstName, lastName, email: privateEmail } = req.query
+    const { firstName, lastName, email: privateEmail } = req.body
 
     if (!validate(privateEmail)) {
       throw new Error('Invalid email address')
