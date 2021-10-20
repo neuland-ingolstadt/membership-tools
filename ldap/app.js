@@ -34,7 +34,7 @@ function normalize (str) {
     .replace(/ /g, '.')
 }
 
-async function validate (email) {
+function validate (email) {
   if (!/.@./.test(email)) {
     return false
   }
