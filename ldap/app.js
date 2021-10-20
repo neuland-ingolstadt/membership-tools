@@ -1,19 +1,17 @@
-const ldap = require('ldapjs')
+const Ldap = require('ldap-async').default
 const nodemailer = require('nodemailer')
 const mustache = require('mustache')
 const passwordGenerator = require('generate-password')
 const basicAuth = require('express-basic-auth')
 const { readFileSync } = require('fs')
-const { promisify } = require('util')
 
 require('dotenv').config()
 
-const ldapClient = ldap.createClient({
-  url: process.env.LDAP_SERVER
+const ldapClient = new Ldap({
+  url: process.env.LDAP_SERVER,
+  bindDN: process.env.LDAP_BIND_CN,
+  bindCredentials: process.env.LDAP_BIND_PASSWORD
 })
-ldapClient.bindAsync = promisify(ldapClient.bind)
-ldapClient.unbindAsync = promisify(ldapClient.unbind)
-ldapClient.addAsync = promisify(ldapClient.add)
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -46,34 +44,28 @@ async function validate (email) {
 }
 
 async function createLdapLogin (firstName, lastName) {
-  await ldapClient.bindAsync(process.env.LDAP_BIND_CN, process.env.LDAP_BIND_PASSWORD)
+  const cn = `${normalize(firstName)}.${normalize(lastName)}`
+  const dn = `cn=${cn},${process.env.LDAP_USER_CN}`
+  const email = `${cn}@neuland-ingolstadt.de`
+  const password = passwordGenerator.generate({ length: 12, lowercase: true, uppercase: true, numbers: true })
 
-  try {
-    const cn = `${normalize(firstName)}.${normalize(lastName)}`
-    const dn = `cn=${cn},${process.env.LDAP_USER_CN}`
-    const email = `${cn}@neuland-ingolstadt.de`
-    const password = passwordGenerator.generate({ length: 12, lowercase: true, uppercase: true, numbers: true })
-
-    console.log('Creating LDAP account ...')
-    const entry = {
-      cn: cn,
-      givenName: firstName,
-      sn: lastName,
-      displayName: `${firstName} ${lastName}`,
-      userPassword: password,
-      mail: email,
-      mailEnabled: 'TRUE',
-      objectClass: [
-        'inetOrgPerson',
-        'PostfixBookMailAccount'
-      ]
-    }
-    await ldapClient.addAsync(dn, entry)
-
-    return { email, password }
-  } finally {
-    await ldapClient.unbind()
+  console.log('Creating LDAP account ...')
+  const entry = {
+    cn: cn,
+    givenName: firstName,
+    sn: lastName,
+    displayName: `${firstName} ${lastName}`,
+    userPassword: password,
+    mail: email,
+    mailEnabled: 'TRUE',
+    objectClass: [
+      'inetOrgPerson',
+      'PostfixBookMailAccount'
+    ]
   }
+  await ldapClient.add(dn, entry)
+
+  return { email, password }
 }
 
 async function sendWelcomeEmail (privateEmail, firstName, lastName, email, password) {
@@ -93,7 +85,7 @@ const port = 3000
 
 app.use(basicAuth({
   users: {
-    'admin': process.env.ADMIN_PASSWORD
+    admin: process.env.ADMIN_PASSWORD
   },
   challenge: true
 }))
@@ -131,8 +123,3 @@ app.post('/create-member', async (req, res) => {
 app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}`)
 })
-
-ldapClient.on('connect', () => {
-  console.log('LDAP connected')
-})
-ldapClient.on('error', e => console.error(e))
