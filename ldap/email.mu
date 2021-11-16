@@ -16,8 +16,8 @@
             <strong>Passwort:</strong> {{password}}
         </p>
         <p>
-            Hier findest du eine Übersicht über unsere Dienste:
-            <a href="https://pad.informatik.sexy/Onboarding">Onboarding</a>
+            Im Mitgliederbereich findet du weitere Informationen:
+            <a href="https://pad.informatik.sexy/Mitgliederbereich">Mitgliederbereich</a>
         </p>
         <p>
             Wir kommunizieren über eine <strong>Signal-Chatgruppe</strong>.
