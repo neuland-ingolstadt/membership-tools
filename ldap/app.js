@@ -25,13 +25,15 @@ const transporter = nodemailer.createTransport({
 })
 
 function normalize (str) {
-  return str.trim()
-    .toLowerCase()
+  return str.toLowerCase()
+    .replace(/prof\./gi, '')
+    .replace(/dr\./gi, '')
     .replace(/ä/g, 'ae')
     .replace(/ö/g, 'oe')
     .replace(/ü/g, 'ue')
     .replace(/ß/g, 'ss')
-    .replace(/ /g, '.')
+    .trim()
+    .replace(/ +/g, '.')
 }
 
 function validate (email) {
