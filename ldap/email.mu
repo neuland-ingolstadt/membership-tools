@@ -36,7 +36,7 @@
             Viele Grüße
         </p>
         <p>
-            Manu, Quirin und Alex
+            Manu, Alex und Chiara
         </p>
     </body>
 </html>
