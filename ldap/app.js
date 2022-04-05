@@ -40,9 +40,6 @@ function validate (email) {
   if (!/.@./.test(email)) {
     return false
   }
-  if (/@(outlook|hotmail|live|msn|passport)\./.test(email)) {
-    return false
-  }
   return true
 }
 
